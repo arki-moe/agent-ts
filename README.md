@@ -42,3 +42,11 @@ console.log(agent.context);
 - `agent.registerTool(tool)` - Register tool
 - `agent.step(message)` - Call model once, returns new `Message[]`
 - `agent.run(message)` - Execute tool chain automatically, returns all new `Message[]`
+
+## Scripts
+
+| Command | Description |
+|---------|--------------|
+| `pnpm run build` | Compile TypeScript to `dist/` |
+| `pnpm run check` | Type check (no emit) |
+| `pnpm test` | Run tests |

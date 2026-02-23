@@ -1,11 +1,13 @@
-# agent.ts
+# agent-ts
+
+[![npm](https://img.shields.io/npm/v/@arki-moe/agent-ts.svg)](https://www.npmjs.com/package/@arki-moe/agent-ts)
 
 Minimal Agent library, zero dependencies
 
 ## Usage Example
 
 ```ts
-import { Agent, Role, type Tool } from "agent-ts";
+import { Agent, Role, type Tool } from "@arki-moe/agent-ts";
 
 const getTimeTool: Tool = {
   name: "get_time",

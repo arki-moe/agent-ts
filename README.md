@@ -49,4 +49,4 @@ console.log(agent.context);
 |---------|--------------|
 | `pnpm run build` | Compile TypeScript to `dist/` |
 | `pnpm run check` | Type check (no emit) |
-| `pnpm test` | Run tests |
+| `pnpm test` | Run tests (API key read from env var for real API tests) |

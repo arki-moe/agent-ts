@@ -1,6 +1,6 @@
 # agent-ts
 
-[![npm](https://img.shields.io/npm/v/@arki-moe/agent-ts.svg)](https://www.npmjs.com/package/@arki-moe/agent-ts)
+[![npm](https://img.shields.io/npm/v/@arki-moe/agent-ts.svg)](https://www.npmjs.com/package/@arki-moe/agent-ts) [![npm](https://img.shields.io/npm/dm/@arki-moe/agent-ts.svg)](https://www.npmjs.com/package/@arki-moe/agent-ts)
 
 Minimal Agent library, zero dependencies
 

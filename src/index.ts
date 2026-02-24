@@ -1,13 +1,16 @@
 import { openaiAdapter } from "./adapter/openai";
+import { openrouterAdapter } from "./adapter/openrouter";
 import type { Adapter, Context, Message, Tool } from "./types";
 import { Role } from "./types";
 
 export { openaiAdapter } from "./adapter/openai";
+export { openrouterAdapter } from "./adapter/openrouter";
 export type { Adapter, Context, Message, Tool } from "./types";
 export { Role } from "./types";
 
 const adapters: Record<string, Adapter> = {
   openai: openaiAdapter,
+  openrouter: openrouterAdapter,
 };
 
 export class Agent {

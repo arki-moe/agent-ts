@@ -11,7 +11,7 @@ Update `CHANGELOG.md` per [Keep a Changelog 1.1.0](https://keepachangelog.com/en
 ## Pre-commit Checklist
 
 - Commit message follows Conventional Commits
-- If user-notable: `CHANGELOG.md` updated under `[Unreleased]`
+- If user-notable: `CHANGELOG.md` updated under `[Unreleased]` — in the **same commit** as the code changes
 - If breaking: `!` or `BREAKING CHANGE:` footer present
 - If necessary: `README.md` updated
 

@@ -35,6 +35,22 @@ console.log(msgs2);
 console.log(agent.context);
 ```
 
+## OpenRouter
+
+```ts
+import { Agent, Role } from "@arki-moe/agent-ts";
+
+const agent = new Agent("openrouter", {
+  apiKey: "or-...",
+  model: "gpt-5-nano",
+  httpReferer: "https://your-site.example", // optional
+  title: "Your App", // optional
+});
+
+const msgs = await agent.step({ role: Role.User, content: "Hello" });
+console.log(msgs);
+```
+
 ## API
 
 - `Agent(adapterName, config)` - Create Agent, config contains `apiKey`, `model`, `system` (optional), etc.

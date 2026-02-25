@@ -47,8 +47,10 @@ console.log(agent.context);
 - `Agent(adapterName, config)` - Create Agent, config contains `apiKey`, `model`, `system` (optional), etc.
 - `agent.context` - Public property, complete conversation history
 - `agent.registerTool(tool)` - Register tool
-- `agent.step(message)` - Call model once, returns new `Message[]`
-- `agent.run(message)` - Execute tool chain automatically, returns all new `Message[]`
+- `agent.step(message, autoAppend?)` - Call model once, returns new `Message[]`
+- `agent.run(message, autoAppend?)` - Execute tool chain automatically, returns all new `Message[]`
+
+`autoAppend` defaults to `true`. When set to `false`, new messages are not appended to `agent.context`.
 
 ## Scripts
 

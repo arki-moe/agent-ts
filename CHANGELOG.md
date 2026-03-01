@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Optional `autoAppend` parameter for `Agent.step` and `Agent.run` to control context mutation (default `true`).
+- `Agent.fork()` for copying the current context into a new agent.
+- Optional `endCondition` callback for `Agent.run` to stop by custom condition using full context and last message.
+
+### Removed
+
+- `autoAppend` parameter from `Agent.step` and `Agent.run`; both now always append to context.
 
 ## [1.0.1] - 2026-02-24
 

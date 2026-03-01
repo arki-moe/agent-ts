@@ -16,10 +16,12 @@ const adapters: Record<string, Adapter> = {
 export class Agent {
   context: Context = [];
   private adapter: Adapter;
+  private adapterName: string;
   private config: Record<string, unknown>;
   private tools: Tool[] = [];
 
   constructor(adapterName: string, config: Record<string, unknown>) {
+    this.adapterName = adapterName;
     this.adapter = adapters[adapterName] ?? (() => { throw new Error(`Adapter "${adapterName}" not found`); })();
     this.config = config;
   }
@@ -28,61 +30,61 @@ export class Agent {
     this.tools.push(tool);
   }
 
-  async step(message?: Message, autoAppend = true): Promise<Message[]> {
-    const context = autoAppend ? this.context : [...this.context];
-
+  async step(message?: Message): Promise<Message[]> {
     if (message) {
-      context.push(message);
+      this.context.push(message);
     }
 
-    const msgs = await this.adapter(this.config, context, this.tools);
-    context.push(...msgs);
+    const msgs = await this.adapter(this.config, this.context, this.tools);
+    this.context.push(...msgs);
     return msgs;
   }
 
-  async run(message: Message, autoAppend = true): Promise<Message[]> {
+  async run(
+    message: Message,
+    endCondition: (context: Message[], last: Message) => boolean = (_context, last) =>
+      last.role === Role.Ai,
+  ): Promise<Message[]> {
     const all: Message[] = [];
-    const originalContext = this.context;
-    if (!autoAppend) {
-      this.context = [...this.context];
-    }
 
-    try {
-      let msgs = await this.step(message, true);
-      all.push(...msgs);
+    let msgs = await this.step(message);
+    all.push(...msgs);
 
-      for (;;) {
-        const last = msgs[msgs.length - 1];
-        if (last.role === Role.Ai) return all;
+    for (;;) {
+      const last = msgs[msgs.length - 1];
+      if (endCondition(this.context, last)) return all;
 
-        for (const m of msgs) {
-          if (m.role !== Role.ToolCall) continue;
-          const tool = this.tools.find((t) => t.name === m.toolName);
-          if (!tool) throw new Error(`Tool "${m.toolName}" is not registered`);
+      for (const m of msgs) {
+        if (m.role !== Role.ToolCall) continue;
+        const tool = this.tools.find((t) => t.name === m.toolName);
+        if (!tool) throw new Error(`Tool "${m.toolName}" is not registered`);
 
-          let content: string;
-          let isError = false;
-          try {
-            const args = JSON.parse(m.argsText || "{}") as unknown;
-            const out = await Promise.resolve(tool.execute(args));
-            content = typeof out === "string" ? out : JSON.stringify(out);
-          } catch (err) {
-            isError = true;
-            content = err instanceof Error ? err.message : String(err);
-          }
-
-          const result: Message = { role: Role.ToolResult, callId: m.callId, content, isError };
-          this.context.push(result);
-          all.push(result);
+        let content: string;
+        let isError = false;
+        try {
+          const args = JSON.parse(m.argsText || "{}") as unknown;
+          const out = await Promise.resolve(tool.execute(args));
+          content = typeof out === "string" ? out : JSON.stringify(out);
+        } catch (err) {
+          isError = true;
+          content = err instanceof Error ? err.message : String(err);
         }
 
-        msgs = await this.step(undefined, true);
-        all.push(...msgs);
+        const result: Message = { role: Role.ToolResult, callId: m.callId, content, isError };
+        this.context.push(result);
+        all.push(result);
       }
-    } finally {
-      if (!autoAppend) {
-        this.context = originalContext;
-      }
+
+      msgs = await this.step();
+      all.push(...msgs);
     }
+  }
+
+  fork(): Agent {
+    const agent = new Agent(this.adapterName, this.config);
+    agent.adapter = this.adapter;
+    agent.tools = [...this.tools];
+    agent.context = [...this.context];
+    return agent;
   }
 }

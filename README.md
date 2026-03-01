@@ -47,10 +47,11 @@ console.log(agent.context);
 - `Agent(adapterName, config)` - Create Agent, config contains `apiKey`, `model`, `system` (optional), etc.
 - `agent.context` - Public property, complete conversation history
 - `agent.registerTool(tool)` - Register tool
-- `agent.step(message, autoAppend?)` - Call model once, returns new `Message[]`
-- `agent.run(message, autoAppend?)` - Execute tool chain automatically, returns all new `Message[]`
+- `agent.step(message?)` - Call model once, returns new `Message[]`
+- `agent.run(message, endCondition?)` - Execute tool chain automatically, returns all new `Message[]`
+- `agent.fork()` - Create a new agent with a copied context
 
-`autoAppend` defaults to `true`. When set to `false`, new messages are not appended to `agent.context`.
+`endCondition` receives `(context, last)` and stops the run when it returns `true`. Defaults to `last.role === Role.Ai`.
 
 ## Scripts
 

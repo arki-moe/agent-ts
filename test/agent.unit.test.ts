@@ -15,7 +15,7 @@ vi.mock("../src/adapter/openrouter", () => ({
 
 import { Agent } from "../src/index";
 
-describe("Agent autoAppend parameter", () => {
+describe("Agent context behavior", () => {
   beforeEach(() => {
     openaiAdapterImpl = async () => [];
   });
@@ -32,19 +32,7 @@ describe("Agent autoAppend parameter", () => {
     expect(agent.context[1]).toEqual({ role: Role.Ai, content: "ok" });
   });
 
-  it("step can avoid appending to context", async () => {
-    openaiAdapterImpl = async () => [{ role: Role.Ai, content: "ok" }];
-    const agent = new Agent("openai", { apiKey: "x" });
-    agent.context.push({ role: Role.System, content: "sys" });
-
-    const msgs = await agent.step({ role: Role.User, content: "hi" }, false);
-
-    expect(msgs).toHaveLength(1);
-    expect(agent.context).toHaveLength(1);
-    expect(agent.context[0]).toEqual({ role: Role.System, content: "sys" });
-  });
-
-  it("run can avoid appending to context while using tools", async () => {
+  it("run appends tool results to context", async () => {
     openaiAdapterImpl = async (_config, context) => {
       const ctx = Array.isArray(context) ? (context as { role: string }[]) : [];
       const last = ctx[ctx.length - 1];
@@ -73,12 +61,62 @@ describe("Agent autoAppend parameter", () => {
       },
     });
 
-    const all = await agent.run({ role: Role.User, content: "add" }, false);
+    const all = await agent.run({ role: Role.User, content: "add" });
 
     expect(all.find((m) => m.role === Role.ToolCall)).toBeTruthy();
     expect(all.find((m) => m.role === Role.ToolResult)).toBeTruthy();
     expect(all.find((m) => m.role === Role.Ai)).toBeTruthy();
+    expect(agent.context.find((m) => m.role === Role.ToolCall)).toBeTruthy();
+    expect(agent.context.find((m) => m.role === Role.ToolResult)).toBeTruthy();
+  });
+
+  it("run endCondition can stop before tool execution", async () => {
+    openaiAdapterImpl = async () => [
+      {
+        role: Role.ToolCall,
+        toolName: "add",
+        callId: "1",
+        argsText: "{\"a\":1,\"b\":2}",
+      },
+    ];
+
+    const agent = new Agent("openai", { apiKey: "x" });
+    const execute = vi.fn(async () => "3");
+    agent.registerTool({
+      name: "add",
+      description: "Add two numbers",
+      parameters: { type: "object", properties: {} },
+      execute,
+    });
+
+    const endCondition = vi.fn((context, last) => {
+      expect(context[0]).toEqual({ role: Role.User, content: "add" });
+      expect(context[context.length - 1]).toEqual(last);
+      return last.role === Role.ToolCall;
+    });
+
+    const all = await agent.run({ role: Role.User, content: "add" }, endCondition);
+
+    expect(all).toHaveLength(1);
+    expect(all[0].role).toBe(Role.ToolCall);
+    expect(execute).not.toHaveBeenCalled();
+    expect(endCondition).toHaveBeenCalledTimes(1);
+  });
+
+  it("fork copies context but not references", async () => {
+    openaiAdapterImpl = async () => [{ role: Role.Ai, content: "ok" }];
+    const agent = new Agent("openai", { apiKey: "x" });
+    agent.context.push({ role: Role.System, content: "sys" });
+
+    const forked = agent.fork();
+
+    expect(forked.context).toHaveLength(1);
+    expect(forked.context).toEqual(agent.context);
+    expect(forked.context).not.toBe(agent.context);
+
+    await forked.step({ role: Role.User, content: "hi" });
+
+    expect(forked.context).toHaveLength(3);
     expect(agent.context).toHaveLength(1);
-    expect(agent.context[0]).toEqual({ role: Role.System, content: "sys" });
   });
 });

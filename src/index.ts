@@ -1,11 +1,11 @@
 import { openaiAdapter } from "./adapter/openai";
 import { openrouterAdapter } from "./adapter/openrouter";
-import type { Adapter, Context, Message, Tool } from "./types";
+import type { Adapter, AgentConfig, Context, Message, Tool } from "./types";
 import { Role } from "./types";
 
 export { openaiAdapter } from "./adapter/openai";
 export { openrouterAdapter } from "./adapter/openrouter";
-export type { Adapter, Context, Message, Tool } from "./types";
+export type { Adapter, AgentConfig, Context, Message, Tool } from "./types";
 export { Role } from "./types";
 
 const adapters: Record<string, Adapter> = {
@@ -17,65 +17,70 @@ export class Agent {
   context: Context = [];
   private adapter: Adapter;
   private adapterName: string;
-  private config: Record<string, unknown>;
+  private config: AgentConfig;
   private tools: Tool[] = [];
+  private endCondition: (context: Message[], last: Message) => boolean;
+  private onToolCall?: (message: Message) => void | Promise<void>;
+  private onToolResult?: (message: Message) => void | Promise<void>;
 
-  constructor(adapterName: string, config: Record<string, unknown>) {
+  constructor(adapterName: string, config: AgentConfig) {
     this.adapterName = adapterName;
     this.adapter = adapters[adapterName] ?? (() => { throw new Error(`Adapter "${adapterName}" not found`); })();
     this.config = config;
+    this.endCondition = config.endCondition ?? ((_ctx, last) => last.role === Role.Ai);
+    this.onToolCall = config.onToolCall;
+    this.onToolResult = config.onToolResult;
   }
 
   registerTool(tool: Tool): void {
     this.tools.push(tool);
   }
 
-  async step(message?: Message): Promise<Message[]> {
-    if (message) {
-      this.context.push(message);
-    }
-
-    const msgs = await this.adapter(this.config, this.context, this.tools);
-    this.context.push(...msgs);
-    return msgs;
-  }
-
-  async run(
-    message: Message,
-    endCondition: (context: Message[], last: Message) => boolean = (_context, last) =>
-      last.role === Role.Ai,
-  ): Promise<Message[]> {
+  async run(message: string): Promise<Message[]> {
+    this.context.push({ role: Role.User, content: message });
     const all: Message[] = [];
 
-    let msgs = await this.step(message);
+    let msgs = await this.adapter(this.config, this.context, this.tools);
+    this.context.push(...msgs);
     all.push(...msgs);
 
     for (;;) {
       const last = msgs[msgs.length - 1];
-      if (endCondition(this.context, last)) return all;
+      if (this.endCondition(this.context, last)) return all;
 
-      for (const m of msgs) {
-        if (m.role !== Role.ToolCall) continue;
-        const tool = this.tools.find((t) => t.name === m.toolName);
-        if (!tool) throw new Error(`Tool "${m.toolName}" is not registered`);
+      const toolCalls = msgs.filter(
+        (m): m is Extract<Message, { role: Role.ToolCall }> => m.role === Role.ToolCall,
+      );
+      if (toolCalls.length === 0) return all;
 
-        let content: string;
-        let isError = false;
-        try {
-          const args = JSON.parse(m.argsText || "{}") as unknown;
-          const out = await Promise.resolve(tool.execute(args));
-          content = typeof out === "string" ? out : JSON.stringify(out);
-        } catch (err) {
-          isError = true;
-          content = err instanceof Error ? err.message : String(err);
-        }
+      const results = await Promise.all(
+        toolCalls.map(async (m) => {
+          const tool = this.tools.find((t) => t.name === m.toolName);
+          if (!tool) throw new Error(`Tool "${m.toolName}" is not registered`);
+          if (this.onToolCall) await Promise.resolve(this.onToolCall(m));
 
-        const result: Message = { role: Role.ToolResult, callId: m.callId, content, isError };
-        this.context.push(result);
-        all.push(result);
-      }
+          let content: string;
+          let isError = false;
+          try {
+            const args = JSON.parse(m.argsText || "{}") as unknown;
+            const out = await Promise.resolve(tool.execute(args));
+            content = typeof out === "string" ? out : JSON.stringify(out);
+          } catch (err) {
+            isError = true;
+            content = err instanceof Error ? err.message : String(err);
+          }
 
-      msgs = await this.step();
+          const result: Message = { role: Role.ToolResult, callId: m.callId, content, isError };
+          if (this.onToolResult) await Promise.resolve(this.onToolResult(result));
+          return result;
+        }),
+      );
+
+      this.context.push(...results);
+      all.push(...results);
+
+      msgs = await this.adapter(this.config, this.context, this.tools);
+      this.context.push(...msgs);
       all.push(...msgs);
     }
   }

@@ -19,17 +19,15 @@ const getTimeTool: Tool = {
 const agent = new Agent("openai", {
   apiKey: "sk-...",
   model: "gpt-5-nano",
-  system: "You are a helpful assistant. Reply concisely.", // optional: system role
+  system: "You are a helpful assistant. Reply concisely.",
+  onToolCall: (msg) => console.log("tool call:", msg),
+  onToolResult: (msg) => console.log("tool result:", msg),
 });
 agent.registerTool(getTimeTool);
 
 // run: Executes tool chain automatically, returns new messages, context is maintained automatically
-const msgs = await agent.run({ role: Role.User, content: "What time is it?" });
+const msgs = await agent.run("What time is it?");
 console.log(msgs);
-
-// step: Single-step inference, returns new messages from the model
-const msgs2 = await agent.step({ role: Role.User, content: "Hello" });
-console.log(msgs2);
 
 // context is a public property that can be read directly
 console.log(agent.context);
@@ -46,15 +44,24 @@ When `apiKey` is not provided in config, adapters read from the corresponding en
 
 ## API
 
-- `Agent(adapterName, config)` - Create Agent, config contains `apiKey`, `model`, `system` (optional), etc.
+- `Agent(adapterName, config)` - Create Agent
 - `agent.context` - Public property, complete conversation history
 - `agent.registerTool(tool)` - Register tool
-- `agent.step(message?)` - Call model once, returns new `Message[]`
-- `agent.run(message, endCondition?)` - Execute tool chain automatically, returns all new `Message[]`
+- `agent.run(message)` - Execute tool chain automatically, returns all new `Message[]`
 - `agent.fork()` - Create a new agent with a copied context
 
-`agent.step` and `agent.run` always append new messages to `agent.context`.
-`endCondition` receives `(context, last)` and stops the run when it returns `true`. Defaults to `last.role === Role.Ai`.
+### Config
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `apiKey` | `string` | API key (or use env var) |
+| `model` | `string` | Model name |
+| `system` | `string` | Optional system prompt |
+| `endCondition` | `(context, last) => boolean` | Stop condition for `run`. Defaults to `last.role === Role.Ai` |
+| `onToolCall` | `(message) => void \| Promise<void>` | Called before each tool execution |
+| `onToolResult` | `(message) => void \| Promise<void>` | Called after each tool execution |
+
+`agent.run` always appends new messages to `agent.context`. Multiple tool calls in a single model response are executed in parallel.
 
 `agent.fork()` shallow-copies the context array, but message objects are shared. This means:
 - Shallow copy: `forked.context !== agent.context`, so pushing new messages does not affect the other agent.

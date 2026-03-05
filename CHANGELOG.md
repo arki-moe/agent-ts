@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Config hooks: `endCondition`, `onToolCall`, `onToolResult`.
+- Multiple tool calls in a single model response are now executed in parallel.
+
+### Changed
+
+- **BREAKING**: `Agent.run` now accepts a plain string instead of a `Message` object.
+- **BREAKING**: `endCondition` moved from `Agent.run` parameter to constructor config.
+
+### Removed
+
+- **BREAKING**: `Agent.step` method.
+
 ## [1.0.3] - 2026-03-05
 
 ### Added

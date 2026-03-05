@@ -11,7 +11,7 @@ if (!openaiApiKey) {
 describe("Agent construction and configuration", () => {
   it("throws error when constructing Agent with non-existent adapter name", () => {
     expect(() => new Agent("nonexistent", {})).toThrow(
-      'Adapter "nonexistent" not found'
+      'Adapter "nonexistent" not found',
     );
   });
 
@@ -24,7 +24,7 @@ describe("Agent construction and configuration", () => {
 describe("OpenAI adapter integration", () => {
   itIfOpenAI("sends user message and receives reply", async () => {
     const agent = new Agent("openai", { model: "gpt-5-nano" });
-    const msgs = await agent.step({ role: Role.User, content: "Reply with one short sentence." });
+    const msgs = await agent.run("Reply with one short sentence.");
 
     expect(msgs).toHaveLength(1);
     expect(msgs[0].role).toBe(Role.Ai);
@@ -54,11 +54,9 @@ describe("OpenAI adapter integration", () => {
       },
     });
 
-    const all = await agent.run({
-      role: Role.User,
-      content:
-        "Call the add tool with a=2 and b=3, then respond with only the result.",
-    });
+    const all = await agent.run(
+      "Call the add tool with a=2 and b=3, then respond with only the result.",
+    );
 
     const toolCall = all.find((m) => m.role === Role.ToolCall);
     const toolResult = all.find((m) => m.role === Role.ToolResult);

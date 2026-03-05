@@ -22,6 +22,13 @@ export type Tool = {
   execute: (args: unknown) => Promise<unknown> | unknown;
 };
 
+export type AgentConfig = {
+  endCondition?: (context: Message[], last: Message) => boolean;
+  onToolCall?: (message: Message) => void | Promise<void>;
+  onToolResult?: (message: Message) => void | Promise<void>;
+  [key: string]: unknown;
+};
+
 export type Adapter = (
   config: Record<string, unknown>,
   context: Message[],

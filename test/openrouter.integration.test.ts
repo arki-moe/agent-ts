@@ -20,7 +20,7 @@ describe("OpenRouter adapter integration", () => {
       httpReferer: "https://example.com",
       title: "Example App",
     });
-    const msgs = await agent.step({ role: Role.User, content: "Reply with one short sentence." });
+    const msgs = await agent.run("Reply with one short sentence.");
 
     expect(msgs).toHaveLength(1);
     expect(msgs[0].role).toBe(Role.Ai);
@@ -54,11 +54,9 @@ describe("OpenRouter adapter integration", () => {
       },
     });
 
-    const all = await agent.run({
-      role: Role.User,
-      content:
-        "Call the add tool with a=2 and b=3, then respond with only the result.",
-    });
+    const all = await agent.run(
+      "Call the add tool with a=2 and b=3, then respond with only the result.",
+    );
 
     const toolCall = all.find((m) => m.role === Role.ToolCall);
     const toolResult = all.find((m) => m.role === Role.ToolResult);

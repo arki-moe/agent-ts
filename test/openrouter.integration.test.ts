@@ -10,15 +10,12 @@ if (!openrouterApiKey) {
 
 describe("OpenRouter adapter integration", () => {
   it("constructs openrouter adapter normally", () => {
-    const agent = new Agent("openrouter", {
-      apiKey: "x",
-    });
+    const agent = new Agent("openrouter", { model: "gpt-5-nano" });
     expect(agent.context).toEqual([]);
   });
 
   itIfOpenRouter("sends user message and receives reply", async () => {
     const agent = new Agent("openrouter", {
-      apiKey: openrouterApiKey as string,
       model: "gpt-5-nano",
       httpReferer: "https://example.com",
       title: "Example App",
@@ -35,7 +32,6 @@ describe("OpenRouter adapter integration", () => {
 
   itIfOpenRouter("handles tool calls via Agent.run", async () => {
     const agent = new Agent("openrouter", {
-      apiKey: openrouterApiKey as string,
       model: "gpt-5-nano",
       httpReferer: "https://example.com",
       title: "Example App",

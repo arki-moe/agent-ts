@@ -10,25 +10,20 @@ if (!openaiApiKey) {
 
 describe("Agent construction and configuration", () => {
   it("throws error when constructing Agent with non-existent adapter name", () => {
-    expect(() => new Agent("nonexistent", { apiKey: "x" })).toThrow(
+    expect(() => new Agent("nonexistent", {})).toThrow(
       'Adapter "nonexistent" not found'
     );
   });
 
   it("constructs openai adapter normally", () => {
-    const agent = new Agent("openai", {
-      apiKey: "x",
-    });
+    const agent = new Agent("openai", { model: "gpt-5-nano" });
     expect(agent.context).toEqual([]);
   });
 });
 
 describe("OpenAI adapter integration", () => {
   itIfOpenAI("sends user message and receives reply", async () => {
-    const agent = new Agent("openai", {
-      apiKey: openaiApiKey as string,
-      model: "gpt-5-nano",
-    });
+    const agent = new Agent("openai", { model: "gpt-5-nano" });
     const msgs = await agent.step({ role: Role.User, content: "Reply with one short sentence." });
 
     expect(msgs).toHaveLength(1);
@@ -40,10 +35,7 @@ describe("OpenAI adapter integration", () => {
   }, 20000);
 
   itIfOpenAI("handles tool calls via Agent.run", async () => {
-    const agent = new Agent("openai", {
-      apiKey: openaiApiKey as string,
-      model: "gpt-5-nano",
-    });
+    const agent = new Agent("openai", { model: "gpt-5-nano" });
 
     agent.registerTool({
       name: "add",

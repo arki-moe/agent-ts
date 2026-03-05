@@ -51,7 +51,23 @@ console.log(agent.context);
 - `agent.run(message, endCondition?)` - Execute tool chain automatically, returns all new `Message[]`
 - `agent.fork()` - Create a new agent with a copied context
 
+`agent.step` and `agent.run` always append new messages to `agent.context`.
 `endCondition` receives `(context, last)` and stops the run when it returns `true`. Defaults to `last.role === Role.Ai`.
+
+`agent.fork()` shallow-copies the context array, but message objects are shared. This means:
+- Shallow copy: `forked.context !== agent.context`, so pushing new messages does not affect the other agent.
+- Shared messages: modifying a message object in one context will be visible in the other.
+
+Example:
+
+```ts
+const forked = agent.fork();
+forked.context.push({ role: Role.User, content: "hi" });
+// agent.context length is unchanged
+
+forked.context[0].content = "changed";
+// agent.context[0].content is also "changed" because messages are shared
+```
 
 ## Scripts
 

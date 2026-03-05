@@ -31,12 +31,12 @@ export async function openrouterAdapter(
   tools: Tool[]
 ): Promise<Message[]> {
   const baseUrl = (config.baseUrl as string) ?? "https://openrouter.ai/api/v1";
-  const apiKey = (config.apiKey as string) ?? "";
+  const apiKey = (config.apiKey as string) || process.env.OPENROUTER_API_KEY || "";
   const model = (config.model as string) ?? "gpt-5-nano";
   const httpReferer = config.httpReferer as string | undefined;
   const title = config.title as string | undefined;
 
-  if (!apiKey) throw new Error("OpenRouter adapter requires apiKey in config");
+  if (!apiKey) throw new Error("OpenRouter adapter requires apiKey in config or OPENROUTER_API_KEY env");
 
   const contextMessages = toOpenRouterMessages(context);
   const systemContent = config.system as string | undefined;

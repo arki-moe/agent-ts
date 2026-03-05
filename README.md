@@ -39,8 +39,10 @@ console.log(agent.context);
 
 | Adapter | Required | Optional |
 |---------|----------|----------|
-| `openai` | `apiKey`, `model` | `system`, `baseUrl` |
-| `openrouter` | `apiKey`, `model` | `system`, `baseUrl`, `httpReferer`, `title` |
+| `openai` | `apiKey` (or `OPENAI_API_KEY` env), `model` | `system`, `baseUrl` |
+| `openrouter` | `apiKey` (or `OPENROUTER_API_KEY` env), `model` | `system`, `baseUrl`, `httpReferer`, `title` |
+
+When `apiKey` is not provided in config, adapters read from the corresponding environment variable. An error is thrown only when both are missing.
 
 ## API
 

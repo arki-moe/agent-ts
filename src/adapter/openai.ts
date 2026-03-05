@@ -31,10 +31,10 @@ export async function openaiAdapter(
   tools: Tool[]
 ): Promise<Message[]> {
   const baseUrl = (config.baseUrl as string) ?? "https://api.openai.com";
-  const apiKey = (config.apiKey as string) ?? "";
+  const apiKey = (config.apiKey as string) || process.env.OPENAI_API_KEY || "";
   const model = (config.model as string) ?? "gpt-5-nano";
 
-  if (!apiKey) throw new Error("OpenAI adapter requires apiKey in config");
+  if (!apiKey) throw new Error("OpenAI adapter requires apiKey in config or OPENAI_API_KEY env");
 
   const contextMessages = toOpenAIMessages(context);
   const systemContent = config.system as string | undefined;

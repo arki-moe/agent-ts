@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `Agent.fork()` for copying the current context into a new agent.
+- Adapters fall back to env vars when `apiKey` is not in config: `OPENAI_API_KEY` for openai, `OPENROUTER_API_KEY` for openrouter. Error only when both config and env are missing.
 - Optional `endCondition` callback for `Agent.run` to stop by custom condition using full context and last message.
 
 ### Removed

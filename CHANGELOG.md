@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-03-05
+
 ### Added
 
 - `Agent.fork()` for copying the current context into a new agent.
@@ -37,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - OpenAI adapter support.
 
-[unreleased]: https://github.com/arki-moe/agent-ts/compare/v1.0.1...HEAD
+[unreleased]: https://github.com/arki-moe/agent-ts/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/arki-moe/agent-ts/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/arki-moe/agent-ts/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/arki-moe/agent-ts/releases/tag/v1.0.0

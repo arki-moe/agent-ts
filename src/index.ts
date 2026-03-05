@@ -21,7 +21,7 @@ export class Agent {
   private tools: Tool[] = [];
   private endCondition: (context: Message[], last: Message) => boolean;
   private onToolCall?: AgentConfig["onToolCall"];
-  private onToolResult?: (message: Message) => void | Promise<void>;
+  private onToolResult?: AgentConfig["onToolResult"];
 
   constructor(adapterName: string, config: AgentConfig) {
     this.adapterName = adapterName;

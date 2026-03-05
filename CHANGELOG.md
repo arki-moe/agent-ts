@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-03-06
+
+### Changed
+
+- `onToolResult` now receives a `ToolResult`-typed message.
+
 ## [2.1.0] - 2026-03-06
 
 ### Changed
@@ -61,7 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - OpenAI adapter support.
 
-[unreleased]: https://github.com/arki-moe/agent-ts/compare/v2.1.0...HEAD
+[unreleased]: https://github.com/arki-moe/agent-ts/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/arki-moe/agent-ts/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/arki-moe/agent-ts/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/arki-moe/agent-ts/compare/v1.0.3...v2.0.0
 [1.0.3]: https://github.com/arki-moe/agent-ts/compare/v1.0.2...v1.0.3

@@ -62,7 +62,7 @@ When `apiKey` is not provided in config, adapters read from the corresponding en
 | `system` | `string` | Optional system prompt |
 | `endCondition` | `(context, last) => boolean` | Stop condition for `run`. Defaults to `last.role === Role.Ai` |
 | `onToolCall` | `(message, args) => boolean \| void \| Promise<boolean \| void>` | Called before each tool execution; return `false` to skip tool execution and `onToolResult` |
-| `onToolResult` | `(message) => void \| Promise<void>` | Called after each tool execution |
+| `onToolResult` | `(message) => void \| Promise<void>` | Called after each tool execution (`message.role === Role.ToolResult`) |
 
 `agent.run` always appends new messages to `agent.context`. Multiple tool calls in a single model response are executed in parallel.
 

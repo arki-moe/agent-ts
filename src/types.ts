@@ -24,7 +24,10 @@ export type Tool = {
 
 export type AgentConfig = {
   endCondition?: (context: Message[], last: Message) => boolean;
-  onToolCall?: (message: Message) => void | Promise<void>;
+  onToolCall?: (
+    message: Extract<Message, { role: Role.ToolCall }>,
+    args: unknown,
+  ) => boolean | void | Promise<boolean | void>;
   onToolResult?: (message: Message) => void | Promise<void>;
   [key: string]: unknown;
 };

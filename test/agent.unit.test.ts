@@ -128,8 +128,71 @@ describe("Agent", () => {
 
     expect(onToolCall).toHaveBeenCalledTimes(1);
     expect(onToolCall.mock.calls[0][0].role).toBe(Role.ToolCall);
+    expect(onToolCall.mock.calls[0][1]).toEqual({ x: "hi" });
     expect(onToolResult).toHaveBeenCalledTimes(1);
     expect(onToolResult.mock.calls[0][0].role).toBe(Role.ToolResult);
+  });
+
+  it("onToolCall can mutate args", async () => {
+    openaiAdapterImpl = async (_config, context) => {
+      const ctx = Array.isArray(context) ? (context as { role: string }[]) : [];
+      const last = ctx[ctx.length - 1];
+      if (last?.role === Role.ToolResult) {
+        return [{ role: Role.Ai, content: "done" }];
+      }
+      return [
+        { role: Role.ToolCall, toolName: "echo", callId: "1", argsText: '{"x":"hi"}' },
+      ];
+    };
+
+    const onToolCall = vi.fn((_message, args) => {
+      (args as { x: string }).x = "changed";
+    });
+
+    const agent = new Agent("openai", { apiKey: "x", onToolCall });
+    agent.registerTool({
+      name: "echo",
+      description: "Echo",
+      parameters: {},
+      execute: (args) => (args as { x: string }).x,
+    });
+
+    const all = await agent.run("test");
+    const toolResult = all.find((m) => m.role === Role.ToolResult);
+
+    expect(onToolCall).toHaveBeenCalledTimes(1);
+    expect(toolResult?.content).toBe("changed");
+  });
+
+  it("onToolCall can skip tool execution", async () => {
+    openaiAdapterImpl = async (_config, context) => {
+      const ctx = Array.isArray(context) ? (context as { role: string }[]) : [];
+      const last = ctx[ctx.length - 1];
+      if (last?.role === Role.ToolCall) {
+        return [{ role: Role.Ai, content: "skipped" }];
+      }
+      return [
+        { role: Role.ToolCall, toolName: "echo", callId: "1", argsText: '{"x":"hi"}' },
+      ];
+    };
+
+    const onToolCall = vi.fn(() => false);
+    const onToolResult = vi.fn();
+    const execute = vi.fn(() => "hi");
+
+    const agent = new Agent("openai", { apiKey: "x", onToolCall, onToolResult });
+    agent.registerTool({
+      name: "echo",
+      description: "Echo",
+      parameters: {},
+      execute,
+    });
+
+    const all = await agent.run("test");
+
+    expect(all.find((m) => m.role === Role.ToolResult)).toBeFalsy();
+    expect(execute).not.toHaveBeenCalled();
+    expect(onToolResult).not.toHaveBeenCalled();
   });
 
   it("executes multiple tool calls in parallel", async () => {

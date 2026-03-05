@@ -20,7 +20,10 @@ const agent = new Agent("openai", {
   apiKey: "sk-...",
   model: "gpt-5-nano",
   system: "You are a helpful assistant. Reply concisely.",
-  onToolCall: (msg) => console.log("tool call:", msg),
+  onToolCall: (message, args) => {
+    console.log("tool call:", message);
+    console.log("tool args:", args);
+  },
   onToolResult: (msg) => console.log("tool result:", msg),
 });
 agent.registerTool(getTimeTool);
@@ -58,10 +61,12 @@ When `apiKey` is not provided in config, adapters read from the corresponding en
 | `model` | `string` | Model name |
 | `system` | `string` | Optional system prompt |
 | `endCondition` | `(context, last) => boolean` | Stop condition for `run`. Defaults to `last.role === Role.Ai` |
-| `onToolCall` | `(message) => void \| Promise<void>` | Called before each tool execution |
+| `onToolCall` | `(message, args) => boolean \| void \| Promise<boolean \| void>` | Called before each tool execution; return `false` to skip tool execution and `onToolResult` |
 | `onToolResult` | `(message) => void \| Promise<void>` | Called after each tool execution |
 
 `agent.run` always appends new messages to `agent.context`. Multiple tool calls in a single model response are executed in parallel.
+
+`onToolCall` receives parsed JSON args and can mutate them before execution. Returning `false` skips the tool call and does not emit a `ToolResult` message.
 
 `agent.fork()` shallow-copies the context array, but message objects are shared. This means:
 - Shallow copy: `forked.context !== agent.context`, so pushing new messages does not affect the other agent.

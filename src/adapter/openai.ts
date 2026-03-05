@@ -1,4 +1,5 @@
 import { Role, type Message, type Tool } from "../types";
+import { readSse } from "./sse";
 
 const ROLE_TO_OPENAI: Record<string, string> = {
   [Role.System]: "system",
@@ -33,6 +34,7 @@ export async function openaiAdapter(
   const baseUrl = (config.baseUrl as string) ?? "https://api.openai.com";
   const apiKey = (config.apiKey as string) || process.env.OPENAI_API_KEY || "";
   const model = (config.model as string) ?? "gpt-5-nano";
+  const onStream = config.onStream as ((textDelta: string) => void | Promise<void>) | undefined;
 
   if (!apiKey) throw new Error("OpenAI adapter requires apiKey in config or OPENAI_API_KEY env");
 
@@ -48,6 +50,7 @@ export async function openaiAdapter(
     messages,
     tools: tools.length ? tools.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.parameters ?? {} } })) : undefined,
     tool_choice: tools.length ? "auto" : undefined,
+    stream: onStream ? true : undefined,
   };
 
   const res = await fetch(`${baseUrl.replace(/\/$/, "")}/v1/chat/completions`, {
@@ -56,8 +59,8 @@ export async function openaiAdapter(
     body: JSON.stringify(body),
   });
 
-  const text = await res.text();
   if (!res.ok) {
+    const text = await res.text();
     let errMsg = `OpenAI API HTTP ${res.status}`;
     try {
       const parsed = JSON.parse(text);
@@ -68,6 +71,32 @@ export async function openaiAdapter(
     throw new Error(errMsg);
   }
 
+  if (onStream) {
+    let content = "";
+
+    await readSse(res, async (dataLine) => {
+      if (dataLine === "[DONE]") return;
+
+      let parsed: any;
+      try {
+        parsed = JSON.parse(dataLine);
+      } catch {
+        throw new Error(`OpenAI API returned invalid JSON: ${dataLine.slice(0, 200)}`);
+      }
+
+      const delta = parsed?.choices?.[0]?.delta;
+      if (!delta) return;
+
+      if (typeof delta.content === "string") {
+        content += delta.content;
+        await Promise.resolve(onStream(delta.content));
+      }
+    });
+
+    return [{ role: Role.Ai, content }];
+  }
+
+  const text = await res.text();
   let data: any;
   try {
     data = JSON.parse(text);

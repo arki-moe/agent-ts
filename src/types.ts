@@ -24,6 +24,7 @@ export type Tool = {
 
 export type AgentConfig = {
   endCondition?: (context: Message[], last: Message) => boolean;
+  onStream?: (textDelta: string) => void | Promise<void>;
   onToolCall?: (
     message: Extract<Message, { role: Role.ToolCall }>,
     args: unknown,

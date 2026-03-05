@@ -70,4 +70,23 @@ describe("OpenAI adapter integration", () => {
     }
     expect(aiMsg).toBeTruthy();
   }, 20000);
+
+  itIfOpenAI("streams responses when onStream is provided", async () => {
+    const streamed: string[] = [];
+    const agent = new Agent("openai", {
+      model: "gpt-5-nano",
+      onStream: (textDelta) => {
+        streamed.push(textDelta);
+      },
+    });
+
+    const msgs = await agent.run("Reply with two short words.");
+
+    expect(streamed.join("").length).toBeGreaterThan(0);
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0].role).toBe(Role.Ai);
+    if (msgs[0].role === Role.Ai) {
+      expect(msgs[0].content.length).toBeGreaterThan(0);
+    }
+  }, 20000);
 });

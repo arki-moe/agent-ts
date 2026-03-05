@@ -1,4 +1,5 @@
 import { Role, type Message, type Tool } from "../types";
+import { readSse } from "./sse";
 
 const ROLE_TO_OPENROUTER: Record<string, string> = {
   [Role.System]: "system",
@@ -35,6 +36,7 @@ export async function openrouterAdapter(
   const model = (config.model as string) ?? "gpt-5-nano";
   const httpReferer = config.httpReferer as string | undefined;
   const title = config.title as string | undefined;
+  const onStream = config.onStream as ((textDelta: string) => void | Promise<void>) | undefined;
 
   if (!apiKey) throw new Error("OpenRouter adapter requires apiKey in config or OPENROUTER_API_KEY env");
 
@@ -50,6 +52,7 @@ export async function openrouterAdapter(
     messages,
     tools: tools.length ? tools.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.parameters ?? {} } })) : undefined,
     tool_choice: tools.length ? "auto" : undefined,
+    stream: onStream ? true : undefined,
   };
 
   const headers: Record<string, string> = {
@@ -65,8 +68,8 @@ export async function openrouterAdapter(
     body: JSON.stringify(body),
   });
 
-  const text = await res.text();
   if (!res.ok) {
+    const text = await res.text();
     let errMsg = `OpenRouter API HTTP ${res.status}`;
     try {
       const parsed = JSON.parse(text);
@@ -77,6 +80,32 @@ export async function openrouterAdapter(
     throw new Error(errMsg);
   }
 
+  if (onStream) {
+    let content = "";
+
+    await readSse(res, async (dataLine) => {
+      if (dataLine === "[DONE]") return;
+
+      let parsed: any;
+      try {
+        parsed = JSON.parse(dataLine);
+      } catch {
+        throw new Error(`OpenRouter API returned invalid JSON: ${dataLine.slice(0, 200)}`);
+      }
+
+      const delta = parsed?.choices?.[0]?.delta;
+      if (!delta) return;
+
+      if (typeof delta.content === "string") {
+        content += delta.content;
+        await Promise.resolve(onStream(delta.content));
+      }
+    });
+
+    return [{ role: Role.Ai, content }];
+  }
+
+  const text = await res.text();
   let data: any;
   try {
     data = JSON.parse(text);

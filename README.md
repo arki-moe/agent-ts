@@ -20,6 +20,9 @@ const agent = new Agent("openai", {
   apiKey: "sk-...",
   model: "gpt-5-nano",
   system: "You are a helpful assistant. Reply concisely.",
+  onStream: (textDelta) => {
+    process.stdout.write(textDelta);
+  },
   onToolCall: (message, args) => {
     console.log("tool call:", message);
     console.log("tool args:", args);
@@ -61,6 +64,7 @@ When `apiKey` is not provided in config, adapters read from the corresponding en
 | `model` | `string` | Model name |
 | `system` | `string` | Optional system prompt |
 | `endCondition` | `(context, last) => boolean` | Stop condition for `run`. Defaults to `last.role === Role.Ai` |
+| `onStream` | `(textDelta: string) => void \| Promise<void>` | Stream hook for AI text only. When provided, adapters use SSE streaming and still return the final `Message[]`. |
 | `onToolCall` | `(message, args) => boolean \| void \| Promise<boolean \| void>` | Called before each tool execution; return `false` to skip tool execution and `onToolResult` |
 | `onToolResult` | `(message) => void \| Promise<void>` | Called after each tool execution (`message.role === Role.ToolResult`) |
 

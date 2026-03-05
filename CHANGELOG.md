@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.2] - 2026-03-06
+
+### Changed
+
+- **BREAKING**: Streaming adapters now return `Role.ToolCall[]` when tool calls are present, matching non-streaming semantics. Streaming no longer always returns a single AI message.
+
 ## [2.2.1] - 2026-03-06
 
 ### Added
@@ -73,7 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - OpenAI adapter support.
 
-[unreleased]: https://github.com/arki-moe/agent-ts/compare/v2.2.1...HEAD
+[unreleased]: https://github.com/arki-moe/agent-ts/compare/v2.2.2...HEAD
+[2.2.2]: https://github.com/arki-moe/agent-ts/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/arki-moe/agent-ts/compare/v2.1.1...v2.2.1
 [2.1.1]: https://github.com/arki-moe/agent-ts/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/arki-moe/agent-ts/compare/v2.0.0...v2.1.0

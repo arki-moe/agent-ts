@@ -82,6 +82,22 @@ export async function openrouterAdapter(
 
   if (onStream) {
     let content = "";
+    const toolCalls = new Map<number, { id?: string; name?: string; args: string }>();
+
+    const upsertToolCall = (tc: any) => {
+      const index = typeof tc?.index === "number" ? tc.index : toolCalls.size;
+      let entry = toolCalls.get(index);
+      if (!entry) {
+        entry = { args: "" };
+        toolCalls.set(index, entry);
+      }
+      if (typeof tc?.id === "string") entry.id = tc.id;
+      const fn = tc?.function;
+      if (fn) {
+        if (typeof fn.name === "string") entry.name = fn.name;
+        if (typeof fn.arguments === "string") entry.args += fn.arguments;
+      }
+    };
 
     await readSse(res, async (dataLine) => {
       if (dataLine === "[DONE]") return;
@@ -96,11 +112,31 @@ export async function openrouterAdapter(
       const delta = parsed?.choices?.[0]?.delta;
       if (!delta) return;
 
+      if (Array.isArray(delta.tool_calls)) {
+        for (const tc of delta.tool_calls) {
+          upsertToolCall(tc);
+        }
+      }
+
       if (typeof delta.content === "string") {
         content += delta.content;
         await Promise.resolve(onStream(delta.content));
       }
     });
+
+    if (toolCalls.size > 0) {
+      return [...toolCalls.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([index, tc]) => {
+          if (!tc.name) throw new Error(`OpenRouter streaming tool call missing function name at index ${index}`);
+          return {
+            role: Role.ToolCall,
+            toolName: tc.name,
+            callId: tc.id ?? `call_${index}`,
+            argsText: tc.args.length ? tc.args : "{}",
+          };
+        });
+    }
 
     return [{ role: Role.Ai, content }];
   }

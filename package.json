@@ -1,6 +1,6 @@
 {
   "name": "@arki-moe/agent-ts",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Minimal Agent library, zero dependencies",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `agent.run` now accepts `options.once` to treat the user message as a one-shot hint without persisting it to `context`.
+
 ## [2.2.2] - 2026-03-06
 
 ### Changed

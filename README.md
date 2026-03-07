@@ -53,7 +53,7 @@ When `apiKey` is not provided in config, adapters read from the corresponding en
 - `Agent(adapterName, config)` - Create Agent
 - `agent.context` - Public property, complete conversation history
 - `agent.registerTool(tool)` - Register tool
-- `agent.run(message)` - Execute tool chain automatically, returns all new `Message[]`
+- `agent.run(message, options?)` - Execute tool chain automatically, returns all new `Message[]`
 - `agent.fork()` - Create a new agent with a copied context
 
 ### Config
@@ -68,7 +68,7 @@ When `apiKey` is not provided in config, adapters read from the corresponding en
 | `onToolCall` | `(message, args) => boolean \| void \| Promise<boolean \| void>` | Called before each tool execution; return `false` to skip tool execution and `onToolResult` |
 | `onToolResult` | `(message) => void \| Promise<void>` | Called after each tool execution (`message.role === Role.ToolResult`) |
 
-`agent.run` always appends new messages to `agent.context`. Multiple tool calls in a single model response are executed in parallel.
+`agent.run` always appends new messages to `agent.context`. Set `options.once = true` to avoid persisting the user message (useful for one-shot hints). Multiple tool calls in a single model response are executed in parallel.
 
 `onToolCall` receives parsed JSON args and can mutate them before execution. Returning `false` skips the tool call and does not emit a `ToolResult` message.
 

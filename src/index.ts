@@ -1,11 +1,11 @@
 import { openaiAdapter } from "./adapter/openai";
 import { openrouterAdapter } from "./adapter/openrouter";
-import type { Adapter, AgentConfig, Context, Message, Tool } from "./types";
+import type { Adapter, AgentConfig, Context, Message, RunOptions, Tool } from "./types";
 import { Role } from "./types";
 
 export { openaiAdapter } from "./adapter/openai";
 export { openrouterAdapter } from "./adapter/openrouter";
-export type { Adapter, AgentConfig, Context, Message, Tool } from "./types";
+export type { Adapter, AgentConfig, Context, Message, RunOptions, Tool } from "./types";
 export { Role } from "./types";
 
 const adapters: Record<string, Adapter> = {
@@ -36,17 +36,34 @@ export class Agent {
     this.tools.push(tool);
   }
 
-  async run(message: string): Promise<Message[]> {
-    this.context.push({ role: Role.User, content: message });
+  async run(message: string, options: RunOptions = {}): Promise<Message[]> {
+    const once = options.once ?? false;
     const all: Message[] = [];
+    const sessionContext = [...this.context];
+    const persistToContext = (msgs: Message[]): void => {
+      this.context.push(...msgs);
+    };
+    const pushToSession = (msgs: Message[]): void => {
+      sessionContext.push(...msgs);
+    };
 
-    let msgs = await this.adapter(this.config, this.context, this.tools);
-    this.context.push(...msgs);
-    all.push(...msgs);
+    const userMessage: Message = { role: Role.User, content: message };
+    pushToSession([userMessage]);
+    if (!once) persistToContext([userMessage]);
+
+    const runAdapter = async (): Promise<Message[]> => {
+      const msgs = await this.adapter(this.config, sessionContext, this.tools);
+      pushToSession(msgs);
+      persistToContext(msgs);
+      all.push(...msgs);
+      return msgs;
+    };
+
+    let msgs = await runAdapter();
 
     for (;;) {
       const last = msgs[msgs.length - 1];
-      if (this.endCondition(this.context, last)) return all;
+      if (this.endCondition(sessionContext, last)) return all;
 
       const toolCalls = msgs.filter(
         (m): m is Extract<Message, { role: Role.ToolCall }> => m.role === Role.ToolCall,
@@ -97,12 +114,11 @@ export class Agent {
       const filteredResults = results.filter(
         (result): result is ToolResultMessage => result !== null,
       );
-      this.context.push(...filteredResults);
+      pushToSession(filteredResults);
+      persistToContext(filteredResults);
       all.push(...filteredResults);
 
-      msgs = await this.adapter(this.config, this.context, this.tools);
-      this.context.push(...msgs);
-      all.push(...msgs);
+      msgs = await runAdapter();
     }
   }
 

@@ -32,6 +32,23 @@ describe("Agent", () => {
     expect(agent.context[1]).toEqual({ role: Role.Ai, content: "ok" });
   });
 
+  it("run once keeps AI reply but omits user message from context", async () => {
+    let sawUserInAdapter = false;
+    openaiAdapterImpl = async (_config, context) => {
+      const ctx = Array.isArray(context) ? (context as { role: string; content?: string }[]) : [];
+      sawUserInAdapter = ctx.some((m) => m.role === Role.User && m.content === "hint");
+      return [{ role: Role.Ai, content: "ok" }];
+    };
+    const agent = new Agent("openai", { apiKey: "x" });
+
+    const msgs = await agent.run("hint", { once: true });
+
+    expect(sawUserInAdapter).toBe(true);
+    expect(msgs).toHaveLength(1);
+    expect(agent.context).toHaveLength(1);
+    expect(agent.context[0]).toEqual({ role: Role.Ai, content: "ok" });
+  });
+
   it("run appends tool results to context", async () => {
     openaiAdapterImpl = async (_config, context) => {
       const ctx = Array.isArray(context) ? (context as { role: string }[]) : [];

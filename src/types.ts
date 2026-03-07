@@ -35,6 +35,10 @@ export type AgentConfig = {
   [key: string]: unknown;
 };
 
+export type RunOptions = {
+  once?: boolean;
+};
+
 export type Adapter = (
   config: Record<string, unknown>,
   context: Message[],

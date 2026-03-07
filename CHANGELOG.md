@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.3] - 2026-03-07
+
 ### Added
 
 - `agent.run` now accepts `options.once` to treat the user message as a one-shot hint without persisting it to `context`.
@@ -83,7 +85,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - OpenAI adapter support.
 
-[unreleased]: https://github.com/arki-moe/agent-ts/compare/v2.2.2...HEAD
+[unreleased]: https://github.com/arki-moe/agent-ts/compare/v2.2.3...HEAD
+[2.2.3]: https://github.com/arki-moe/agent-ts/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/arki-moe/agent-ts/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/arki-moe/agent-ts/compare/v2.1.1...v2.2.1
 [2.1.1]: https://github.com/arki-moe/agent-ts/compare/v2.1.0...v2.1.1

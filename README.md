@@ -54,7 +54,6 @@ When `apiKey` is not provided in config, adapters read from the corresponding en
 - `agent.context` - Public property, complete conversation history
 - `agent.registerTool(tool)` - Register tool
 - `agent.run(message, options?)` - Execute tool chain automatically, returns all new `Message[]`
-- `agent.fork()` - Create a new agent with a copied context
 
 ### Config
 
@@ -71,21 +70,6 @@ When `apiKey` is not provided in config, adapters read from the corresponding en
 `agent.run` always appends new messages to `agent.context`. Set `options.once = true` to avoid persisting the user message (useful for one-shot hints). Multiple tool calls in a single model response are executed in parallel.
 
 `onToolCall` receives parsed JSON args and can mutate them before execution. Returning `false` skips the tool call and does not emit a `ToolResult` message.
-
-`agent.fork()` shallow-copies the context array, but message objects are shared. This means:
-- Shallow copy: `forked.context !== agent.context`, so pushing new messages does not affect the other agent.
-- Shared messages: modifying a message object in one context will be visible in the other.
-
-Example:
-
-```ts
-const forked = agent.fork();
-forked.context.push({ role: Role.User, content: "hi" });
-// agent.context length is unchanged
-
-forked.context[0].content = "changed";
-// agent.context[0].content is also "changed" because messages are shared
-```
 
 ## Scripts
 

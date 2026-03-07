@@ -122,11 +122,4 @@ export class Agent {
     }
   }
 
-  fork(): Agent {
-    const agent = new Agent(this.adapterName, this.config);
-    agent.adapter = this.adapter;
-    agent.tools = [...this.tools];
-    agent.context = [...this.context];
-    return agent;
-  }
 }

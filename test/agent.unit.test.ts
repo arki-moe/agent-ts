@@ -247,20 +247,4 @@ describe("Agent", () => {
     expect(order[1]).toBe("start:b");
   });
 
-  it("fork copies context but not references", async () => {
-    openaiAdapterImpl = async () => [{ role: Role.Ai, content: "ok" }];
-    const agent = new Agent("openai", { apiKey: "x" });
-    agent.context.push({ role: Role.System, content: "sys" });
-
-    const forked = agent.fork();
-
-    expect(forked.context).toHaveLength(1);
-    expect(forked.context).toEqual(agent.context);
-    expect(forked.context).not.toBe(agent.context);
-
-    await forked.run("hi");
-
-    expect(forked.context).toHaveLength(3);
-    expect(agent.context).toHaveLength(1);
-  });
 });

@@ -72,7 +72,7 @@ describe("Agent", () => {
       name: "add",
       description: "Add two numbers",
       parameters: { type: "object", properties: {} },
-      execute: async (args) => {
+      execute: async (args, _agent) => {
         const { a, b } = args as { a: number; b: number };
         return String(a + b);
       },
@@ -130,15 +130,21 @@ describe("Agent", () => {
       ];
     };
 
-    const onToolCall = vi.fn();
-    const onToolResult = vi.fn();
+    let sawCallAgent: Agent | undefined;
+    let sawResultAgent: Agent | undefined;
+    const onToolCall = vi.fn((_message, _args, agent) => {
+      sawCallAgent = agent;
+    });
+    const onToolResult = vi.fn((_message, agent) => {
+      sawResultAgent = agent;
+    });
 
     const agent = new Agent("openai", { apiKey: "x", onToolCall, onToolResult });
     agent.registerTool({
       name: "echo",
       description: "Echo",
       parameters: {},
-      execute: (args) => (args as { x: string }).x,
+      execute: (args, _agent) => (args as { x: string }).x,
     });
 
     await agent.run("test");
@@ -146,8 +152,10 @@ describe("Agent", () => {
     expect(onToolCall).toHaveBeenCalledTimes(1);
     expect(onToolCall.mock.calls[0][0].role).toBe(Role.ToolCall);
     expect(onToolCall.mock.calls[0][1]).toEqual({ x: "hi" });
+    expect(sawCallAgent).toBe(agent);
     expect(onToolResult).toHaveBeenCalledTimes(1);
     expect(onToolResult.mock.calls[0][0].role).toBe(Role.ToolResult);
+    expect(sawResultAgent).toBe(agent);
   });
 
   it("onToolCall can mutate args", async () => {
@@ -162,7 +170,7 @@ describe("Agent", () => {
       ];
     };
 
-    const onToolCall = vi.fn((_message, args) => {
+    const onToolCall = vi.fn((_message, args, _agent) => {
       (args as { x: string }).x = "changed";
     });
 
@@ -171,7 +179,7 @@ describe("Agent", () => {
       name: "echo",
       description: "Echo",
       parameters: {},
-      execute: (args) => (args as { x: string }).x,
+      execute: (args, _agent) => (args as { x: string }).x,
     });
 
     const all = await agent.run("test");
@@ -193,9 +201,9 @@ describe("Agent", () => {
       ];
     };
 
-    const onToolCall = vi.fn(() => false);
-    const onToolResult = vi.fn();
-    const execute = vi.fn(() => "hi");
+    const onToolCall = vi.fn((_message, _args, _agent) => false);
+    const onToolResult = vi.fn((_message, _agent) => {});
+    const execute = vi.fn((_args, _agent) => "hi");
 
     const agent = new Agent("openai", { apiKey: "x", onToolCall, onToolResult });
     agent.registerTool({
@@ -231,7 +239,7 @@ describe("Agent", () => {
       name: "slow",
       description: "Slow tool",
       parameters: {},
-      execute: async (args) => {
+      execute: async (args, _agent) => {
         const { id } = args as { id: string };
         order.push(`start:${id}`);
         await new Promise((r) => setTimeout(r, 50));

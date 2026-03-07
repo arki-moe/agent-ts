@@ -15,11 +15,17 @@ export type Message =
 
 export type Context = Message[];
 
+export interface AgentLike {
+  context: Context;
+  registerTool: (tool: Tool) => void;
+  run: (message: string, options?: RunOptions) => Promise<Message[]>;
+}
+
 export type Tool = {
   name: string;
   description: string;
   parameters: unknown;
-  execute: (args: unknown) => Promise<unknown> | unknown;
+  execute: (args: unknown, agent: AgentLike) => Promise<unknown> | unknown;
 };
 
 export type AgentConfig = {
@@ -28,9 +34,11 @@ export type AgentConfig = {
   onToolCall?: (
     message: Extract<Message, { role: Role.ToolCall }>,
     args: unknown,
+    agent: AgentLike,
   ) => boolean | void | Promise<boolean | void>;
   onToolResult?: (
     message: Extract<Message, { role: Role.ToolResult }>,
+    agent: AgentLike,
   ) => void | Promise<void>;
   [key: string]: unknown;
 };

@@ -13,7 +13,7 @@ const getTimeTool: Tool = {
   name: "get_time",
   description: "Get the current time in ISO format",
   parameters: { type: "object", properties: {} },
-  execute: () => new Date().toISOString(),
+  execute: (_args, _agent) => new Date().toISOString(),
 };
 
 const agent = new Agent("openai", {
@@ -23,11 +23,12 @@ const agent = new Agent("openai", {
   onStream: (textDelta) => {
     process.stdout.write(textDelta);
   },
-  onToolCall: (message, args) => {
+  onToolCall: (message, args, agent) => {
     console.log("tool call:", message);
     console.log("tool args:", args);
+    console.log("agent context length:", agent.context.length);
   },
-  onToolResult: (msg) => console.log("tool result:", msg),
+  onToolResult: (msg, agent) => console.log("tool result:", msg, agent.context.length),
 });
 agent.registerTool(getTimeTool);
 
@@ -64,8 +65,8 @@ When `apiKey` is not provided in config, adapters read from the corresponding en
 | `system` | `string` | Optional system prompt |
 | `endCondition` | `(context, last) => boolean` | Stop condition for `run`. Defaults to `last.role === Role.Ai` |
 | `onStream` | `(textDelta: string) => void \| Promise<void>` | Stream hook for AI text only. When provided, adapters use SSE streaming and still return the final `Message[]`. |
-| `onToolCall` | `(message, args) => boolean \| void \| Promise<boolean \| void>` | Called before each tool execution; return `false` to skip tool execution and `onToolResult` |
-| `onToolResult` | `(message) => void \| Promise<void>` | Called after each tool execution (`message.role === Role.ToolResult`) |
+| `onToolCall` | `(message, args, agent) => boolean \| void \| Promise<boolean \| void>` | Called before each tool execution; return `false` to skip tool execution and `onToolResult` |
+| `onToolResult` | `(message, agent) => void \| Promise<void>` | Called after each tool execution (`message.role === Role.ToolResult`) |
 
 `agent.run` always appends new messages to `agent.context`. Set `options.once = true` to avoid persisting the user message (useful for one-shot hints). Multiple tool calls in a single model response are executed in parallel.
 

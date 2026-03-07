@@ -1,11 +1,11 @@
 import { openaiAdapter } from "./adapter/openai";
 import { openrouterAdapter } from "./adapter/openrouter";
-import type { Adapter, AgentConfig, Context, Message, RunOptions, Tool } from "./types";
+import type { Adapter, AgentConfig, AgentLike, Context, Message, RunOptions, Tool } from "./types";
 import { Role } from "./types";
 
 export { openaiAdapter } from "./adapter/openai";
 export { openrouterAdapter } from "./adapter/openrouter";
-export type { Adapter, AgentConfig, Context, Message, RunOptions, Tool } from "./types";
+export type { Adapter, AgentConfig, AgentLike, Context, Message, RunOptions, Tool } from "./types";
 export { Role } from "./types";
 
 const adapters: Record<string, Adapter> = {
@@ -13,7 +13,7 @@ const adapters: Record<string, Adapter> = {
   openrouter: openrouterAdapter,
 };
 
-export class Agent {
+export class Agent implements AgentLike {
   context: Context = [];
   private adapter: Adapter;
   private adapterName: string;
@@ -86,19 +86,19 @@ export class Agent {
               content: err instanceof Error ? err.message : String(err),
               isError: true,
             };
-            if (this.onToolResult) await Promise.resolve(this.onToolResult(result));
+            if (this.onToolResult) await Promise.resolve(this.onToolResult(result, this));
             return result;
           }
 
           if (this.onToolCall) {
-            const shouldRun = await Promise.resolve(this.onToolCall(m, args));
+            const shouldRun = await Promise.resolve(this.onToolCall(m, args, this));
             if (shouldRun === false) return null;
           }
 
           let content: string;
           let isError = false;
           try {
-            const out = await Promise.resolve(tool.execute(args));
+            const out = await Promise.resolve(tool.execute(args, this));
             content = typeof out === "string" ? out : JSON.stringify(out);
           } catch (err) {
             isError = true;
@@ -106,7 +106,7 @@ export class Agent {
           }
 
           const result: ToolResultMessage = { role: Role.ToolResult, callId: m.callId, content, isError };
-          if (this.onToolResult) await Promise.resolve(this.onToolResult(result));
+          if (this.onToolResult) await Promise.resolve(this.onToolResult(result, this));
           return result;
         }),
       );
